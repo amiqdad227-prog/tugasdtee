@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Certificate Verification System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome untuk Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <!-- NAVBAR UTAMA -->
+    <nav class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
+        <div class="flex items-center space-x-2 cursor-pointer" onclick="showPage('landing')">
+            <i class="fa-solid fa-shield-halved text-2xl"></i>
+            <span class="font-bold text-xl tracking-wide">CertiVerify</span>
+        </div>
+        <div id="nav-user-info" class="hidden items-center space-x-4">
+            <span id="user-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-white text-blue-600"></span>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded text-sm font-medium transition">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTAINER UTAMA -->
+    <main class="max-w-6xl mx-auto p-4 md:p-6 min-h-[85vh]">
+
+        <!-- 1. LANDING PAGE / PUBLIC SEARCH -->
+        <section id="page-landing" class="page-section space-y-8 py-10">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Sistem Verifikasi & Manajemen E-Sertifikat</h1>
+                <p class="text-gray-600">Periksa keaslian sertifikat secara instan atau masuk ke akun portal Anda.</p>
+            </div>
+
+            <!-- Fitur Pencarian Publik -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-xl mx-auto">
+                <h3 class="font-bold text-lg mb-4 text-center text-gray-700">Cek Sertifikat Cepat (Publik)</h3>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+                        <input id="public-search-input" type="text" placeholder="Masukkan ID Sertifikat / NIM..." class="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="searchCertificate('public-search-input', 'public-result')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition">Cari Data</button>
+                        <button onclick="simulateQRScan('public-search-input', 'public-result')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition" title="Simulasi Scan QR">
+                            <i class="fa-solid fa-qrcode"></i> Scan QR
+                        </button>
+                    </div>
+                </div>
+                <!-- Hasil Pengecekan -->
+                <div id="public-result" class="mt-4 hidden"></div>
+            </div>
+
+            <!-- Pintu Masuk / Login Portal -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-6">
+                <div onclick="openLoginModal('admin')" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-center cursor-pointer hover:shadow-md transition hover:-translate-y-1">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3 class="font-bold text-lg">Portal Admin</h3>
+                    <p class="text-gray-500 text-sm mt-1">Validasi status keaslian sertifikat</p>
+                </div>
+                <div onclick="openLoginModal('panitia')" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-center cursor-pointer hover:shadow-md transition hover:-translate-y-1">
+                    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl"><i class="fa-solid fa-users-gear"></i></div>
+                    <h3 class="font-bold text-lg">Portal Panitia</h3>
+                    <p class="text-gray-500 text-sm mt-1">Upload data & rilis e-sertifikat</p>
+                </div>
+                <div onclick="openLoginModal('mahasiswa')" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-center cursor-pointer hover:shadow-md transition hover:-translate-y-1">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl"><i class="fa-solid fa-user-graduate"></i></div>
+                    <h3 class="font-bold text-lg">Portal Mahasiswa</h3>
+                    <p class="text-gray-500 text-sm mt-1">Cari & unduh sertifikat resmi</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. DASHBOARD ADMIN -->
+        <section id="page-admin" class="page-section hidden space-y-6">
+            <div class="border-b pb-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-user-shield text-red-500 mr-2"></i>Dashboard Admin Validator</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Panel Validasi -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border col-span-1 space-y-4">
+                    <h3 class="font-bold text-lg border-b pb-2">Verifikasi Sertifikat Baru</h3>
+                    <div class="space-y-3">
+                        <input id="admin-search-input" type="text" placeholder="ID Sertifikat / NIM / Kode QR..." class="w-full p-2 border rounded">
+                        <div class="flex space-x-2">
+                            <button onclick="searchCertificate('admin-search-input', 'admin-verify-result')" class="flex-1 bg-gray-800 text-white py-2 rounded text-sm font-medium hover:bg-gray-900">Periksa</button>
+                            <button onclick="simulateQRScan('admin-search-input', 'admin-verify-result')" class="bg-gray-100 px-3 py-2 rounded text-gray-600 border"><i class="fa-solid fa-qrcode"></i></button>
+                        </div>
+                    </div>
+                    <!-- Hasil yang butuh keputusan admin -->
+                    <div id="admin-verify-result" class="hidden p-4 rounded-lg bg-gray-50 border space-y-3"></div>
+                </div>
+
+                <!-- Panel Riwayat Validasi -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border col-span-2">
+                    <h3 class="font-bold text-lg border-b pb-2 mb-4">Riwayat Log Validasi Sistem</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 border-b">
+                                    <th class="p-3 font-semibold text-gray-600">Waktu</th>
+                                    <th class="p-3 font-semibold text-gray-600">ID Sertifikat</th>
+                                    <th class="p-3 font-semibold text-gray-600">Pemilik / NIM</th>
+                                    <th class="p-3 font-semibold text-gray-600">Status Akhir</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-log-table">
+                                <!-- Terisi dinamis saat ada aksi validasi nyata -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. DASHBOARD PANITIA -->
+        <section id="page-panitia" class="page-section hidden space-y-6">
+            <div class="border-b pb-4">
+                <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-users-gear text-green-500 mr-2"></i>Dashboard Manajemen Panitia</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Upload -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+                    <h3 class="font-bold text-lg border-b pb-2">Penerbitan Sertifikat (Upload)</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 block mb-1">Nama Event / Acara</label>
+                            <input id="input-event" type="text" placeholder="Contoh: Seminar Nasional Cybersecurity" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500 block mb-1">Nama Peserta</label>
+                                <input id="input-nama" type="text" placeholder="Ahmad Miqdad" class="w-full p-2 border rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500 block mb-1">NIM Peserta</label>
+                                <input id="input-nim" type="text" placeholder="0110125013" class="w-full p-2 border rounded text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 block mb-1">File Pendukung / Template (Simulasi)</label>
+                            <input type="file" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                        <button onclick="handlePanitiaUpload()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium text-sm transition">Generate & Upload Sertifikat</button>
+                    </div>
+                </div>
+
+                <!-- Daftar Sertifikat yang diupload panitia -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border col-span-2">
+                    <h3 class="font-bold text-lg border-b pb-2 mb-4">Daftar Sertifikat Diterbitkan</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 border-b">
+                                    <th class="p-3 font-semibold text-gray-600">ID Sertifikat / QR</th>
+                                    <th class="p-3 font-semibold text-gray-600">Nama Event</th>
+                                    <th class="p-3 font-semibold text-gray-600">Penerima (NIM)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="panitia-cert-table">
+                                <!-- Terisi dinamis tanpa menampilkan kolom status -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. DASHBOARD MAHASISWA -->
+        <section id="page-mahasiswa" class="page-section hidden space-y-6">
+            <div class="border-b pb-4">
+                <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-user-graduate text-blue-500 mr-2"></i>Ruang Sertifikat Mahasiswa</h2>
+            </div>
+
+            <!-- Pencarian Mandiri -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border max-w-2xl">
+                <h3 class="font-bold text-lg mb-3">Klaim / Cari Sertifikat Menggunakan QR atau ID</h3>
+                <div class="flex space-x-2">
+                    <input id="mhs-search-input" type="text" placeholder="Masukkan ID Sertifikat / NIM Anda..." class="flex-1 p-2 border rounded">
+                    <button onclick="searchCertificate('mhs-search-input', 'mhs-search-result')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Cari</button>
+                    <button onclick="simulateQRScan('mhs-search-input', 'mhs-search-result')" class="bg-gray-100 border px-3 py-2 rounded text-gray-600"><i class="fa-solid fa-qrcode"></i></button>
+                </div>
+                <div id="mhs-search-result" class="mt-4 hidden"></div>
+            </div>
+
+            <!-- List Sertifikat Saya -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <h3 class="font-bold text-lg border-b pb-2 mb-4">Sertifikat Resmi Anda</h3>
+                <div id="mhs-cert-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Terisi dinamis -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL POPUP LOGIN MODAL SIMULASI -->
+    <div id="login-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl p-6 shadow-xl relative space-y-4">
+            <button onclick="closeLoginModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center">
+                <h3 id="modal-login-title" class="font-bold text-xl capitalize text-gray-900">Login</h3>
+                <p class="text-gray-500 text-xs mt-1">Gunakan akun demo simulasi untuk masuk</p>
+            </div>
+            <div class="space-y-3 pt-2">
+                <input id="login-username" type="text" placeholder="Username / NIM" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <input id="login-password" type="password" value="123456" placeholder="Password" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium transition">Masuk Portal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-800 text-gray-400 text-center py-4 text-xs mt-10">
+        &copy; 2026 CertiVerify - Tugas Sistem Informasi. Powered by HTML5 & Tailwind.
+    </footer>
+
+    <!-- LOGIKA JAVASCRIPT -->
+    <script>
+        // 1. DATABASE SIMULASI (Sertifikat Awal)
+        let certificates = [
+            { id: "CERT-99102", event: "Webinar UI/UX Case Study Tokopedia", name: "Ahmad Miqdad", nim: "0110125013", status: "Valid", date: "2026-04-12" },
+            { id: "CERT-22505", event: "Pekan Pengabdian Kepada Masyarakat", name: "Aisyah Sabila Ramadhani", nim: "0110125057", status: "Valid", date: "2025-06-15" },
+            { id: "CERT-10492", event: "Seminar Nasional Cybersecurity", name: "Rian Ardianto", nim: "0110125014", status: "Belum Valid", date: "2026-05-20" }
+        ];
+
+        // Riwayat log admin (Sertifikat Valid bawaan dimasukkan otomatis ke histori awal)
+        let adminLogs = [
+            { time: "2026-04-12 10:00", certId: "CERT-99102", info: "Ahmad Miqdad (0110125013)", status: "Valid" },
+            { time: "2025-06-15 14:30", certId: "CERT-22505", info: "Aisyah Sabila Ramadhani (0110125057)", status: "Valid" }
+        ]; 
+
+        let currentRole = 'guest';
+        let currentUser = '';
+
+        // 2. NAVIGASI HALAMAN
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(section => section.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        // 3. FITUR LOGIN MODAL
+        let selectedLoginRole = '';
+        function openLoginModal(role) {
+            selectedLoginRole = role;
+            document.getElementById('modal-login-title').innerText = `Login Portal ${role}`;
+            
+            // Shortcut isian username login otomatis sesuai role agar praktis dicoba
+            if(role === 'mahasiswa') {
+                document.getElementById('login-username').value = '0110125013';
+            } else {
+                document.getElementById('login-username').value = role;
+            }
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('login-username').value;
+            if(!username) return alert('Username tidak boleh kosong');
+            
+            currentRole = selectedLoginRole;
+            currentUser = username;
+
+            document.getElementById('nav-user-info').classList.remove('hidden');
+            document.getElementById('nav-user-info').classList.add('flex');
+            document.getElementById('user-badge').innerText = `${currentRole.toUpperCase()}: ${currentUser}`;
+
+            closeLoginModal();
+            renderAllTables();
+            showPage(currentRole);
+        }
+
+        function logout() {
+            currentRole = 'guest';
+            currentUser = '';
+            document.getElementById('nav-user-info').classList.add('hidden');
+            document.getElementById('nav-user-info').classList.remove('flex');
+            showPage('landing');
+        }
+
+        // 4. LOGIKA PENCARIAN
+        function searchCertificate(inputId, resultId) {
+            const query = document.getElementById(inputId).value.trim().toLowerCase();
+            const resultBox = document.getElementById(resultId);
+            resultBox.classList.remove('hidden');
+
+            if (!query) {
+                resultBox.innerHTML = `<p class="text-red-500 text-sm font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Masukkan kata kunci pencarian dahulu.</p>`;
+                return;
+            }
+
+            const filtered = certificates.filter(c => c.id.toLowerCase() === query || c.nim.toLowerCase() === query);
+
+            if (filtered.length === 0) {
+                resultBox.innerHTML = `
+                    <div class="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm font-bold flex items-center space-x-2">
+                        <i class="fa-solid fa-barcode text-lg"></i>
+                        <span>Barcode atau ID Sertifikat Tidak Ditemukan!</span>
+                    </div>`;
+                return;
+            }
+
+            let htmlContent = `<p class="text-xs font-bold text-gray-400 mb-2">HASIL PENCARIAN (${filtered.length}):</p><div class="space-y-3">`;
+            
+            filtered.forEach(cert => {
+                let statusColor = cert.status === 'Valid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                
+                htmlContent += `
+                    <div class="p-3 bg-white border rounded-lg shadow-xs space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-mono font-bold text-blue-600">${cert.id}</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${statusColor}">${cert.status}</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-900">${cert.event}</h4>
+                        <p class="text-xs text-gray-600">Penerima: ${cert.name} (${cert.nim})</p>
+                `;
+
+                if (currentRole === 'admin' && inputId === 'admin-search-input' && cert.status !== 'Valid') {
+                    htmlContent += `
+                        <div class="pt-2 border-t mt-2">
+                            <button onclick="adminAction('${cert.id}', 'Valid')" class="w-full bg-green-600 text-white text-xs py-1.5 rounded font-medium hover:bg-green-700">Set Valid</button>
+                        </div>
+                    `;
+                }
+
+                if (cert.status === 'Valid') {
+                    htmlContent += `
+                        <button onclick="alert('Berhasil mengunduh PDF untuk ${cert.id}')" class="w-full mt-2 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs py-1.5 rounded font-semibold transition">
+                            <i class="fa-solid fa-download mr-1"></i> Download PDF Resmi
+                        </button>
+                    `;
+                }
+
+                htmlContent += `</div>`;
+            });
+
+            htmlContent += `</div>`;
+            resultBox.innerHTML = htmlContent;
+        }
+
+        function simulateQRScan(inputId, resultId) {
+            // Simulasi probabilitas kecil scan barcode salah untuk uji coba fungsionalitas pesan eror
+            if(Math.random() < 0.15) {
+                document.getElementById(inputId).value = "BARCODE-SALAH-" + Math.floor(1000 + Math.random() * 9000);
+                alert(`[Simulasi QR Scanner] Scan Berhasil! Mendeteksi Barcode luar sistem yang tidak terdaftar.`);
+                searchCertificate(inputId, resultId);
+                return;
+            }
+
+            if(certificates.length === 0) return alert('Database kosong!');
+            const randomCert = certificates[Math.floor(Math.random() * certificates.length)];
+            document.getElementById(inputId).value = randomCert.id;
+            alert(`[Simulasi QR Scanner] Scan Berhasil! Mendeteksi QR Berisi ID: ${randomCert.id}`);
+            searchCertificate(inputId, resultId);
+        }
+
+        // 5. FITUR PANITIA: UPLOAD DATA
+        function handlePanitiaUpload() {
+            const event = document.getElementById('input-event').value;
+            const name = document.getElementById('input-nama').value;
+            const nim = document.getElementById('input-nim').value;
+
+            if(!event || !name || !nim) return alert('Mohon lengkapi semua form input panitia!');
+
+            const newId = "CERT-" + Math.floor(10000 + Math.random() * 90000);
+            const today = new Date().toISOString().split('T')[0];
+
+            certificates.push({
+                id: newId,
+                event: event,
+                name: name,
+                nim: nim,
+                status: "Belum Valid", 
+                date: today
+            });
+
+            alert(`Sertifikat berhasil diterbitkan oleh Panitia!\nID Sertifikat Anda: ${newId}`);
+            
+            document.getElementById('input-event').value = '';
+            document.getElementById('input-nama').value = '';
+            document.getElementById('input-nim').value = '';
+
+            renderAllTables();
+        }
+
+        // 6. FITUR ADMIN: VALIDASI RESMI
+        function adminAction(certId, newStatus) {
+            const certIndex = certificates.findIndex(c => c.id === certId);
+            if(certIndex > -1) {
+                certificates[certIndex].status = newStatus;
+                
+                const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
+                adminLogs.unshift({
+                    time: now,
+                    certId: certId,
+                    info: `${certificates[certIndex].name} (${certificates[certIndex].nim})`,
+                    status: newStatus
+                });
+
+                alert(`Sertifikat ${certId} sukses diubah menjadi: ${newStatus.toUpperCase()}`);
+                document.getElementById('admin-verify-result').classList.add('hidden');
+                document.getElementById('admin-search-input').value = '';
+                renderAllTables();
+            }
+        }
+
+        // 7. RE-RENDER DATA KE MATRIKS LAYAR
+        function renderAllTables() {
+            // Render Tabel Panitia
+            const panitiaTable = document.getElementById('panitia-cert-table');
+            panitiaTable.innerHTML = '';
+            certificates.forEach(c => {
+                panitiaTable.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-mono font-bold text-xs">
+                            ${c.id} <br>
+                            <span class="text-[10px] text-gray-400 font-sans"><i class="fa-solid fa-qrcode"></i> Scan ready</span>
+                        </td>
+                        <td class="p-3">${c.event}</td>
+                        <td class="p-3">${c.name} (${c.nim})</td>
+                    </tr>
+                `;
+            });
+
+            // Render Log Riwayat Admin
+            const logTable = document.getElementById('admin-log-table');
+            logTable.innerHTML = '';
+            if(adminLogs.length === 0) {
+                logTable.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400 text-xs">Belum ada aktivitas validasi dokumen.</td></tr>`;
+            } else {
+                adminLogs.forEach(l => {
+                    logTable.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50 text-xs">
+                            <td class="p-3 text-gray-500">${l.time}</td>
+                            <td class="p-3 font-mono font-bold text-blue-600">${l.certId}</td>
+                            <td class="p-3 text-gray-700">${l.info}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">${l.status}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Render Menu Mahasiswa (Bisa untuk simulasi login NIM Ahmad ataupun Aisyah)
+            const mhsGrid = document.getElementById('mhs-cert-grid');
+            mhsGrid.innerHTML = '';
+            const myCertificates = certificates.filter(c => c.nim === currentUser);
+            
+            if(myCertificates.length === 0) {
+                mhsGrid.innerHTML = `<p class="text-sm text-gray-500 col-span-2">Belum ada sertifikat terbit atas nama Anda (${currentUser}).</p>`;
+            } else {
+                myCertificates.forEach(c => {
+                    let btnDownload = c.status === 'Valid' 
+                        ? `<button onclick="alert('Mendownload file asli ${c.id}')" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1.5 rounded font-medium">Download PDF Resmi</button>`
+                        : `<button disabled class="mt-3 w-full bg-gray-200 text-gray-400 text-xs py-1.5 rounded font-medium cursor-not-allowed">Belum Bisa Diunduh (${c.status})</button>`;
+                    
+                    let badgeColor = c.status === 'Valid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                    
+                    mhsGrid.innerHTML += `
+                        <div class="bg-gray-50 p-4 rounded-xl border flex flex-col justify-between">
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-xs font-mono font-bold text-gray-400">${c.id}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${c.status}</span>
+                                </div>
+                                <h4 class="font-bold text-gray-900 text-sm">${c.event}</h4>
+                                <p class="text-xs text-gray-500">Tanggal Rilis: ${c.date}</p>
+                            </div>
+                            ${btnDownload}
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Inisialisasi awal aplikasi
+        renderAllTables();
+    </script>
+</body>
+</html>
